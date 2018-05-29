@@ -1,21 +1,23 @@
 
+function Stiller( stiller ){
+
+    
+
+}
+
 
 export const StillerService = {
     install: function (Vue, options) {
-        //private
-        var myPrivateProperty = 'Private property';
-        //instance properties and methods
-        Vue.prototype.$myPublicProperty = 'Public Property';
-        Vue.prototype.$myAddedMethod = function () {
-            return myPrivateProperty;
-        };
-        Vue.prototype._getData = function (url) {
-            return url;
-        };
-        //static properties and methods
-        Vue.myStaticProperty = 'My static prop';
-        Vue.myStaticMethod = function () {
-            console.log('in');
-        };
+        
+        if( window[ process.env.STILLER_PROP ] ){
+
+            var stiller = window[ process.env.STILLER_PROP ];
+
+            if( stiller.initial && stiller.getProp && stiller.setProp && stiller.callMethod ) {
+
+                Vue.prototype.$stiller = new Stiller(stiller);
+            }
+
+        }
     }
 };
