@@ -4,14 +4,27 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 
+import VueMaterial from 'vue-material'
+import VueMaterialIcon from 'vue-material-icon'
+import VueTouch from "vue-touch";
+
+import axios from "axios";
+import "./materialize.config.scss"
+import "./assets/animate.css"
+
 import { StillerService } from "./services/StillerService";
+import { TransService } from "./services/TransService";
 
 Vue.config.productionTip = false
 
 Vue.use( StillerService )
+Vue.use( TransService )
+Vue.use( VueTouch )
+Vue.use({ install(V) { V.prototype.$axios = axios } })
+Vue.component(VueMaterialIcon.name, VueMaterialIcon)
 
 /* eslint-disable no-new */
-new Vue({
+window.VueApp = new Vue({
   el: '#app',
   router,
   components: { App },
