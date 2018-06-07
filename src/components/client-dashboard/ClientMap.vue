@@ -1,39 +1,64 @@
 <template>
   <div class="client-map">
     <!-- pk.eyJ1IjoiZGltaXRyaWkyNCIsImEiOiJjamZ4Mjd6YTc0c2NoMzNxZmZ0bm4zb2VoIn0.0gSumYwts1haOU7_SZ8cIw     -->
-
-    <div id="top-panel">
-
-    </div>
   
     <div class="row">
-      <div id="map" v-bind:style="{ position: 'absolute', width:'100%', left:0, top: map.top +'px', bottom: map.bottom +'px' }">
-        <div class="point"></div>
+      <div id="map" v-bind:style="{ bottom: map.bottom +'px' }">
+        <div class="point" v-bind:style="{ opacity: (search_showen ? 0 : 1) }"></div>
         
         <div class="address-wrapper">
-          <span class="address" v-bind:class="{ hidden: !map.center_address }">{{ map.center_address || trans('client_map.address_not_found') }}</span>
+          <span class="address" v-bind:class="{ hidden: !map.center.address }">{{ map.center.address || trans('client_map.address_not_found') }}</span>
         </div>
 
         <v-touch @tap="toggleSearch">
           <a class="search" v-bind:class="{ full: search_showen }">
+            <transition name="apear-feaded">
             <vue-material-icon v-if="!search_showen" name="search" :size="32"></vue-material-icon>
+            </transition>
           </a>
         </v-touch>
 
         <div class="btn-go-wrapper">
-          <v-touch class="btn-go" v-bind:class="{ hidden: !map.center_address }">
-              kfjghflkgjshdlfgkjl
+          <v-touch class="btn-go" v-bind:class="{ hidden: !map.center.address }" @tap="makeOrder">
+              {{ trans('client_map.btn_next') }}
           </v-touch>
         </div>
 
-        <div class="search-box" v-if="search_showen">
-          <input type="text" class="search-input" v-model="searchQuery" @keyup="getAddresses">
-          <ul>
-            <li v-for="(street, $i) in search_streets" :key="$i" v-if="$i < 10">
-              {{ street.name }} | {{ street.parent_name }}
-            </li>
-          </ul>
-        </div>
+        <transition name="apear-feaded">
+          <div class="search-box" v-if="search_showen" v-bind:class="{showen: search_showen}">
+            <div class="row abs-search">
+              <v-touch tag="span" @tap="search_showen = false" class="close">
+                <vue-material-icon name="clear" :size="26"></vue-material-icon>
+              </v-touch>
+              <div class="input-search-wrapper col s12" style="position: relative; left: -0.75rem;">
+                <div class="col s12">
+                  <input type="text" class="search-input" @keyup="getAddresses">
+                </div>
+              </div>
+            </div>
+            <div class="row under-abs-search">
+              <div class="col s12 items-wrapper">
+                <transition-group name="streets-li" tag="ul">
+                  <v-touch @tap="streetSelected($i)" tag="li" v-for="(street, $i) in search_streets" :key="$i" class="street-address">
+                    <span class="street-name">
+                      {{ street.name }}
+                    </span>
+                    <span class="street-city">
+                      {{ street.parent_name }}
+                    </span>
+                    <ul v-if="street.show_buildings" class="street-buildings row">
+                      <v-touch @tap="locationSelected(street, bulding)" tag="li" v-for="(bulding, $j) in street.buildings" :key="$j" style="padding: 7px" class="col s3">
+                        <a class="col s12 btn blue darken-4">
+                        {{ bulding }}
+                        </a>
+                      </v-touch>
+                    </ul>
+                  </v-touch>
+                </transition-group>
+              </div>
+            </div>
+          </div>
+        </transition>
 
       </div>
     </div>
@@ -72,10 +97,16 @@ export default {
       map: {
         top: 30,
         bottom: 52 + ( this.$stiller.navbar.height.y / 2 ),
-        center_address: '',
+        center: {
+
+          address: '',
+          street_id: null,
+          house_number: null,
+        },
         wrapper: null,
-        nominatim: "https://nominatim.openstreetmap.org/reverse",
+        nominatim: "https://point.md/ru/map/webmap/near",
         search: "https://point.md/ru/map/webmap/search",
+        getCoords: "https://point.md/ru/map/webmap/get_street"
       },
       search_showen: false,
       searchQuery: "",
@@ -103,7 +134,7 @@ export default {
 
     this.map.wrapper.on('touchstart', e => {
 
-      this.map.center_address = "";
+      this.map.center.address = "";
       clearTimeout(touchMoveTimer);
       touchMoveTimer = null;
     })
@@ -138,40 +169,45 @@ export default {
     getAddress() {
 
       const center = this.map.wrapper.getCenter()
+
+      this.map.center.lat = center.lat
+      this.map.center.lon = center.lng
+
       this.$axios.get(this.map.nominatim, {
 
         params: {
           lat: center.lat,
-          lon: center.lng,
-          zoom: 18,
-          format: 'json',
-          addressdetails: 1,
-          'accept-language': this.trans.lang,
+          lon: center.lng
         }
 
       }).then(r => {
 
-        if( r.data && r.data.address && r.data.address.road && r.data.address.house_number ) {
+        console.log(r)
 
-          this.map.center_address = `${r.data.address.road}, ${r.data.address.house_number}`
+        if( r.data && r.data.building ) {
+
+          this.map.center.address = `${r.data.building.street_name}, ${r.data.building.number}`
+          this.map.center.street_id = r.data.building.street_id
+          this.map.center.house_number = r.data.building.number
 
         } else {
 
-          this.map.center_address = ''
+          this.map.center.address = ''
+          this.map.center.street_id = null
+          this.map.center.house_number = null
         }
       })
     },
 
-    getAddresses() {
+    getAddresses( e ) {
 
-      console.log("this.searchQuery:" + this.searchQuery)
+      if(! e.target.value.toLowerCase() ) return;
 
-      if(! this.searchQuery ) return;
 
       this.$axios.get(this.map.search, {
 
         params: {
-          q: encodeURIComponent(this.searchQuery)
+          q: e.target.value.toLowerCase()
         }
 
       }).then(r => {
@@ -179,6 +215,8 @@ export default {
         this.search_streets = [];
 
         r.data && r.data.list.forEach(street => {
+
+          street.show_buildings = false
 
           street.type == "street" && (this.search_streets.push(street))
 
@@ -194,13 +232,55 @@ export default {
 
       if( this.search_showen ) {
 
-        this.map.center_address = ''
+        this.map.center.address = ''
 
       } else {
 
         this.getAddress()
       }
+    },
 
+    streetSelected($i) {
+      
+      this.search_streets.forEach((street, i) => {
+
+        this.search_streets[i].show_buildings = ( $i == i )
+
+      })
+    },
+
+    locationSelected(street, building) {
+      
+      this.$axios.get(this.map.getCoords, {
+        
+        params: {
+          id: street.id,
+          number: building
+        }
+
+      }).then(r => {
+        
+        if( r.data && r.data.centroid ) {
+          
+          this.map.center.street_id = street.id
+          this.map.center.house_number = building
+          this.map.center.address = `${street.name}, ${building}`
+          this.map.center.lat = r.data.centroid.lat
+          this.map.center.lon = r.data.centroid.lon
+
+          this.makeOrder()
+
+        }        
+      })
+    },
+
+    makeOrder() {
+
+      this.search_showen = false
+      this.map.wrapper.setCenter([
+        this.map.center.lon,
+        this.map.center.lat,
+      ])
     }
   }
 }
@@ -208,6 +288,12 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+  #map{
+    position: absolute;
+    width: 100%;
+    left:0;
+    top: 0;
+  }
   #map .mapboxgl-control-container {
     display: none
   }
@@ -226,6 +312,7 @@ export default {
     background: rgba(29, 228, 174, 0.1);
     border-radius: 100%;
     z-index: 99;
+    transition: opacity .3s;
   }
 
   #map .point:after{
@@ -242,7 +329,7 @@ export default {
 
   .address-wrapper{
     position: absolute;    
-    top: 10px;
+    top: 20px;
     left: 50%;
   }
 
@@ -252,11 +339,13 @@ export default {
     left: -50%;
     display: table;
     padding: 7px 10px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.4);
     border-radius: 20px;
     margin: 10px auto;
     transition: all 0.5s;
     z-index: 199;
+    text-shadow: 2px 2px 5px #000;
+    box-shadow: 0px 3px 22px -11px #fff;
   }
 
   .address.hidden{
@@ -277,13 +366,14 @@ export default {
     border-radius: 10px;
     z-index: 99;
     transition: all 0.5s;
+    box-shadow: 0px 0px 22px -11px #fff;
   }
 
   .search.full{
-    top: 2%;
+    top: 4%;
     left: 2%;
     margin: 0;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.95);
   }
 
   .btn-go-wrapper{
@@ -312,12 +402,83 @@ export default {
 
   .search-box{
     position: absolute;
-    top: 2%;
+    top: 4%;
     left: 2%;
     right: 2%;
     bottom: 2%;
     padding: 10px 15px;
     z-index: 299;
-    color: #000
+    color: #000;
+    opacity: 1;
   }
+
+  .search-box .close{
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    background: rgba(33, 42, 73, 0.5);
+    padding: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 20px;
+    color: #fff;
+  }
+
+  .apear-feaded-enter-active{
+    transition: opacity .5s;
+    transition-delay: 0.5s
+  }
+
+  .apear-feaded-enter, .apear-feaded-leave-to /* .fade-leave-active below version 2.1.8 */ {
+    opacity: 0;
+  }
+
+  .streets-li-enter-active {
+    animation: bounce-in .5s;
+  }
+  .streets-li-leave-active {
+    animation: bounce-in .5s reverse;
+  }
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1.5);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .street-address{
+    text-align: left; 
+    padding: 7px 5px;
+    border-bottom: 1px solid rgba(16, 20, 35, 0.1);
+  }
+
+  .street-name{
+    font-size: 18px;
+    color: #101423;
+  }
+
+  .street-city{
+    margin-left: 7px;
+    color: #6174b8;
+  }
+
+
+.row.abs-search {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+}
+
+.row.under-abs-search {
+    max-height: calc(100% - 50px);
+    margin-top: 50px;
+    overflow: scroll;
+}
+
 </style>

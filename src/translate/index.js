@@ -3,6 +3,7 @@ import { en_welcome } from "./en/welcome";
 
 import { ru_login } from "./ru/login";
 import { ru_welcome } from "./ru/welcome";
+import { ru_client_map } from "./ru/client_map";
 
 
 export const list_of_trans = {
@@ -11,6 +12,7 @@ export const list_of_trans = {
 
         login: ru_login,
         welcome: ru_welcome,
+        client_map: ru_client_map,
     },
 
     en: {

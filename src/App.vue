@@ -12,6 +12,8 @@ export default {
 
 <style>
 
+  /* 181e35 */
+
   @import url(https://api.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css);
 
   #app {
@@ -41,7 +43,7 @@ export default {
     top: 0;
     left: 0;
     right: 0;
-    background: #181e35;
+    background: #101423;
     padding-top: 30px;
   }
 
@@ -50,7 +52,8 @@ export default {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #181e35;
+    background: #101423;
+    box-shadow: 0px -3px 10px 0px #101423;
   }
 
   #bottom-panel > ul{

@@ -9,8 +9,8 @@ import VueMaterialIcon from 'vue-material-icon'
 import VueTouch from "vue-touch";
 
 import axios from "axios";
-import "./materialize.config.scss"
 import "./assets/animate.css"
+import "./assets/materialize.css"
 
 import { StillerService } from "./services/StillerService";
 import { TransService } from "./services/TransService";
