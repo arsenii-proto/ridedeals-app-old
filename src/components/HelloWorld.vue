@@ -57,7 +57,7 @@ export default {
 
       if( doc.data.type != null ){
 
-        this.$router.push(
+        this.$router.replace(
 
           doc.data.type == "client" ? '/client-dashboard' : "/driver-dashboard"
 
@@ -88,7 +88,7 @@ export default {
         this.$stiller.firebase.auth.loggedUser.phone
       ).update({
         type: "client"
-      }).then(() =>  this.$router.push('/client-dashboard') )
+      }).then(() =>  this.$router.replace('/client-dashboard') )
     },
     
     likeDriver(){
@@ -97,7 +97,7 @@ export default {
         this.$stiller.firebase.auth.loggedUser.phone
       ).update({
         type: "driver"
-      }).then(() =>  this.$router.push('/driver-dashboard') ) 
+      }).then(() =>  this.$router.replace('/driver-dashboard') ) 
     },
   }
 }

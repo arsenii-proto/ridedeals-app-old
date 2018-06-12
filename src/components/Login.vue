@@ -202,7 +202,7 @@ export default {
 
       this.$stiller.firebase.auth.signInWithPhoneNumber({ number: this.country_code + this.phone_number })
         .then(this.repaireUser)
-        .catch(error => { this.$router.push('/not-allowed') })
+        .catch(error => { this.$router.replace('/not-allowed') })
       
       this.number_sended = true
     },
@@ -213,7 +213,7 @@ export default {
 
       this.$stiller.firebase.auth.signInWithPhoneNumberCode({ code: this.code_number })
         .then(this.repaireUser)
-        .catch(error => { this.$router.push('/not-allowed') })
+        .catch(error => { this.$router.replace('/not-allowed') })
     },
 
     repaireUser() {
@@ -236,7 +236,7 @@ export default {
             type: null,
             app_token: self.$stiller.firebase.app_token
 
-          }).then(() => { self.$router.push('/') })
+          }).then(() => { self.$router.replace('/') })
 
         } else {
 
@@ -244,7 +244,7 @@ export default {
 
               app_token: self.$stiller.firebase.app_token
 
-          }).then(() => { self.$router.push('/') })
+          }).then(() => { self.$router.replace('/') })
         }
 
       })
